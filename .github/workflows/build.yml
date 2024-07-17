@@ -63,7 +63,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           mvn -B compile
-          mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Obligatorio-DevOps-175577-payments-service -Dsonar.java.binaries=target/classes
+          mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Obligatorio-DevOps-175577-181513_payments-service -Dsonar.java.binaries=target/classes
 
   push_to_ecr:
     name: Push Docker Image to ECR
