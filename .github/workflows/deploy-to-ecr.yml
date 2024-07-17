@@ -1,6 +1,29 @@
 name: Payments MS build and deploy
 
 on:
+  workflow_call:
+    inputs:
+      CI_ENV:
+        required: true
+        type: string
+      CONTENTFUL_ENVIRONMENT:
+        required: true
+        type: string
+    secrets:
+      SONAR_TOKEN:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_DEFAULT_REGION:
+        required: true
+      ECR_REPOSITORY:
+        required: true
+      ECR_REGISTRY:
+        required: true
+
+
   push:
     branches:
       - production
@@ -35,6 +58,13 @@ jobs:
       - name: Build with Maven
         run: mvn -B verify
 
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: payments-service-jar
+          path: target/*-spring-boot.jar
+
+
   analyze:
     name: Analyze
     needs: build
@@ -65,6 +95,7 @@ jobs:
           mvn -B compile
           mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Obligatorio-DevOps-175577-181513_payments-service -Dsonar.java.binaries=target/classes
 
+     
   push_to_ecr:
     name: Push Docker Image to ECR
     needs: analyze
@@ -72,6 +103,12 @@ jobs:
     if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/production' || github.ref == 'refs/heads/branch-staging' || github.ref == 'refs/heads/branch-develop') }}
     steps:
       - uses: actions/checkout@v3
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: payments-service-jar
+          path: target
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -95,4 +132,3 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
